@@ -2,5 +2,6 @@
     "name": "example",
     "private": true,
     "devDependencies": {
+        "typescript": "3.4.3"
     }
 }

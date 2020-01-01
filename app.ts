@@ -5,14 +5,14 @@ interface ImageContext {
 }
 
 class ColorMapUI {
-    private output: HTMLElement;
-    private percent: HTMLElement;
+    private output: HTMLElement | null = null;
+    private percent: HTMLElement | null = null;
     private startTime: number = 0;
 
     constructor(id: string) {
         const elem = document.getElementById(id);
 
-        if (elem){
+        if (elem) {
             this.output = elem;
             this.percent = document.createElement('div');
             this.percent.style.backgroundColor = '#339966'
@@ -32,13 +32,19 @@ class ColorMapUI {
         const totalTime = Math.round((performance.now() - this.startTime) / 100) / 10;
         const timing = document.createElement('div');
         timing.innerHTML = `Total time ${totalTime} seconds`;
-        this.output.appendChild(timing);
+
+        if (this.output) {
+            this.output.appendChild(timing);
+        }
     }
 
     error(err: string) {
         const elem = document.createElement('div');
         elem.innerHTML = err;
-        this.output.appendChild(elem);
+
+        if (this.output) {
+            this.output.appendChild(elem);
+        }
     }
 
     information(info: string) {
@@ -69,7 +75,9 @@ class ColorMapUI {
             list.appendChild(elem);
         }
 
-        this.output.appendChild(list);
+        if (this.output) {
+            this.output.appendChild(list);
+        }
     }
 
     private getSwatch(swatch: [string, number], total: number) {
@@ -87,8 +95,8 @@ class ColorMapUI {
 }
 
 class ColorMap {
-    private dict: {[key: string]: number} = {};
-    
+    private dict: { [key: string]: number } = {};
+
     constructor(private ui = new ColorMapUI('swatches')) {
     }
 
@@ -99,9 +107,9 @@ class ColorMap {
                 this.processPixel(image, 0, 0);
             }
         }).catch((error) => {
-            this.ui.error(error);  
+            this.ui.error(error);
         });
-    }    
+    }
 
     private processPixel(image: ImageContext, rowNumber: number, columnNumber: number) {
         columnNumber++;
@@ -111,17 +119,17 @@ class ColorMap {
 
             const progress = Math.floor((rowNumber / image.height) * 100);
             this.ui.progress(progress);
-    
+
             if (rowNumber >= image.height) {
                 const swatches = this.getOrderedSwatches();
                 this.ui.showSwatches(image, swatches);
                 return;
             }
         }
-    
+
         const pixelData = image.context.getImageData(columnNumber, rowNumber, 1, 1).data;
         this.addPixel(pixelData);
-    
+
         if ((columnNumber + rowNumber) % 50 === 0) {
             // Let someone else have the UI for a while
             window.setTimeout(() => this.processPixel(image, rowNumber, columnNumber), 0);
@@ -158,7 +166,7 @@ class ColorMap {
         });
 
         // Sort the array based on the number of pixels element
-        items = items.sort(function(first: any, second: any) {
+        items = items.sort(function (first: any, second: any) {
             return second[1] - first[1];
         });
 
@@ -172,19 +180,19 @@ class ColorMap {
             if (!img) {
                 reject('Image not found.');
             }
-    
+
             img.onload = () => {
                 const width = 25; // 100 works well
                 const height = Math.floor((width / img.width) * img.height);
-                
+
                 const context = this.get2dContext(width, height);
-    
+
                 if (context) {
                     context.drawImage(img, 0, 0, width, height);
                     resolve({ context: context, width: width, height: height });
                     return;
                 }
-    
+
                 reject('Context not created.');
             }
         });
